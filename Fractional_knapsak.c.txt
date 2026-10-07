@@ -1,0 +1,161 @@
+#include <stdio.h>
+
+#define MAX 50
+
+typedef struct {
+    int id;
+    float weight;
+    float value;
+    float ratio;
+} Package;
+
+Package pkg[MAX];
+int n = 0;
+float capacity = 0;
+
+void inputPackages() {
+    int i;
+    printf("\nEnter number of packages (max %d): ", MAX);
+    scanf("%d", &n);
+    if (n <= 0 || n > MAX) {
+        printf("Invalid number of packages!\n");
+        n = 0;
+        return;
+    }
+    for (i = 0; i < n; i++) {
+        pkg[i].id = i + 1;
+        printf("Package %d - Enter weight: ", i + 1);
+        scanf("%f", &pkg[i].weight);
+        printf("Package %d - Enter value (profit): ", i + 1);
+        scanf("%f", &pkg[i].value);
+        if (pkg[i].weight <= 0 || pkg[i].value < 0) {
+            printf("Invalid input! Weight must be > 0 and value >= 0. Re-enter.\n");
+            i--;
+            continue;
+        }
+        pkg[i].ratio = pkg[i].value / pkg[i].weight;
+    }
+    printf("\nPackages entered successfully.\n");
+}
+
+void setCapacity() {
+    printf("\nEnter vehicle capacity: ");
+    scanf("%f", &capacity);
+    if (capacity <= 0) {
+        printf("Invalid capacity!\n");
+        capacity = 0;
+    } else {
+        printf("Capacity set to %.2f\n", capacity);
+    }
+}
+
+void displayPackages() {
+    int i;
+    if (n == 0) {
+        printf("\nNo packages available. Please enter packages first.\n");
+        return;
+    }
+    printf("\n%-8s %-10s %-10s %-10s\n", "Package", "Weight", "Value", "Value/Wt");
+    printf("-------------------------------------------\n");
+    for (i = 0; i < n; i++) {
+        printf("%-8d %-10.2f %-10.2f %-10.2f\n",
+               pkg[i].id, pkg[i].weight, pkg[i].value, pkg[i].ratio);
+    }
+}
+
+void sortByRatio(Package arr[], int size) {
+    int i, j;
+    Package temp;
+    for (i = 0; i < size - 1; i++) {
+        for (j = 0; j < size - i - 1; j++) {
+            if (arr[j].ratio < arr[j + 1].ratio) {
+                temp = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = temp;
+            }
+        }
+    }
+}
+
+void solveKnapsack() {
+    int i;
+    float remaining, totalValue = 0, totalWeight = 0, fraction;
+    Package sorted[MAX];
+
+    if (n == 0) {
+        printf("\nPlease enter packages first.\n");
+        return;
+    }
+    if (capacity <= 0) {
+        printf("\nPlease set the vehicle capacity first.\n");
+        return;
+    }
+
+    /* work on a copy so the original order is preserved */
+    for (i = 0; i < n; i++)
+        sorted[i] = pkg[i];
+
+    sortByRatio(sorted, n);
+
+    remaining = capacity;
+
+    printf("\n---------------- LOADING DETAILS ----------------\n");
+    printf("%-8s %-10s %-10s %-12s %-10s\n",
+           "Package", "Weight", "Value", "Fraction", "Profit");
+    printf("-------------------------------------------------\n");
+
+    for (i = 0; i < n && remaining > 0; i++) {
+        if (sorted[i].weight <= remaining) {
+            /* take the whole package */
+            fraction = 1.0;
+            remaining -= sorted[i].weight;
+            totalWeight += sorted[i].weight;
+            totalValue += sorted[i].value;
+            printf("%-8d %-10.2f %-10.2f %-12.2f %-10.2f\n",
+                   sorted[i].id, sorted[i].weight, sorted[i].value,
+                   fraction, sorted[i].value);
+        } else {
+            /* take a fraction of the package */
+            fraction = remaining / sorted[i].weight;
+            float profit = sorted[i].value * fraction;
+            totalWeight += remaining;
+            totalValue += profit;
+            printf("%-8d %-10.2f %-10.2f %-12.2f %-10.2f\n",
+                   sorted[i].id, sorted[i].weight, sorted[i].value,
+                   fraction, profit);
+            remaining = 0;
+        }
+    }
+
+    printf("-------------------------------------------------\n");
+    printf("Total weight loaded : %.2f / %.2f\n", totalWeight, capacity);
+    printf("Maximum total value : %.2f\n", totalValue);
+}
+
+int main() {
+    int choice;
+
+    do {
+        printf("\n========================================\n");
+        printf("   FRACTIONAL KNAPSACK - DELIVERY VEHICLE\n");
+        printf("========================================\n");
+        printf("1. Enter package details\n");
+        printf("2. Set vehicle capacity\n");
+        printf("3. Display packages\n");
+        printf("4. Solve (Maximum value using Greedy)\n");
+        printf("5. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1: inputPackages();   break;
+            case 2: setCapacity();     break;
+            case 3: displayPackages(); break;
+            case 4: solveKnapsack();   break;
+            case 5: printf("\nExiting program. Thank you!\n"); break;
+            default: printf("\nInvalid choice! Try again.\n");
+        }
+    } while (choice != 5);
+
+    return 0;
+}
